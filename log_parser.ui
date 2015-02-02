@@ -48,6 +48,16 @@
        </layout>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QDateTimeEdit" name="startDateTimeEdit"/>
+        </item>
+        <item>
+         <widget class="QDateTimeEdit" name="endDateTimeEdit"/>
+        </item>
+       </layout>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QCheckBox" name="logTypeCheckBox">

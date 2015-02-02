@@ -57,7 +57,7 @@ class LogEntry(object):
 class LogTableModel(QtCore.QAbstractTableModel):
     
     _column_count = 4
-    _header_labels = ["Line number", "Log type", "Timestamp", "Message"]
+    _header_labels = ["Line", "Log type", "Timestamp", "Message"]
     _log_type_colors = {
         "ERROR": (255, 0, 0, 200),
         "WARN": (255, 125, 0, 130),
@@ -74,6 +74,32 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._log_types = []       
         self._log_entries = []
         self.update()
+        self._start_date_time = None
+        self._end_date_time = None
+        
+    def _get_start_date_time(self, date_time):
+        return self._start_date_time
+        
+    def _set_start_date_time(self, date_time):
+        if type(date_time) is datetime.datetime:
+            self._start_date_time = date_time
+            self.update()
+        else:
+            self._start_date_time = None
+    
+    start_date_time = property(_get_start_date_time, _set_start_date_time)
+            
+    def _get_end_date_time(self, date_time):
+        return self._end_date_time
+        
+    def _set_end_date_time(self, date_time):
+        if type(date_time) is datetime.datetime:
+            self._end_date_time = date_time
+            self.update()
+        else:
+            self._end_date_time = None
+    
+    end_date_time = property(_get_end_date_time, _set_end_date_time)           
 
     def _get_file_name(self):
         return self._file_name
@@ -158,7 +184,11 @@ class LogTableModel(QtCore.QAbstractTableModel):
                 for i, line in enumerate(fid):
                     line_num = str(i + 1)
                     log_entry = LogEntry.from_log_line(line_num, line)
-                    if log_entry:            
+                    if log_entry:
+                        if self._start_date_time and self._start_date_time > log_entry.date_time:
+                            continue 
+                        if self._end_date_time and self._end_date_time < log_entry.date_time:
+                            continue
                         if log_entry.log_type not in self._log_types:
                             self._log_types.append(log_entry.log_type)
                         if self._is_log_type_active \
