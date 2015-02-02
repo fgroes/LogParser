@@ -29,8 +29,8 @@ class LogParser(QtGui.QMainWindow):
         self.startDateTimeEdit.setDisplayFormat(LogParser._dateTimeDisplayFormat)
         self.endDateTimeEdit.setDisplayFormat(LogParser._dateTimeDisplayFormat)
         now = datetime.datetime.now()
-        start = now + datetime.timedelta(-1)
-        end = now + datetime.timedelta(1)
+        start = now + datetime.timedelta(0, -3600)
+        end = now + datetime.timedelta(0, 3600)
         self._log_table_model.start_date_time = start
         self._log_table_model.end_date_time = end
         self.startDateTimeEdit.setDateTime(QtCore.QDateTime(start.year, start.month, start.day, start.hour, start.minute, start.second))
