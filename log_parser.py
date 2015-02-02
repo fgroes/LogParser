@@ -92,8 +92,7 @@ class LogParser(QtGui.QMainWindow):
         time = date_time.time()
         dt = datetime.datetime(date.year(), date.month(), date.day(),
             time.hour(), time.minute(), time.second())
-        return dt
-        
+        return dt        
                 
         
 if __name__ == "__main__":
