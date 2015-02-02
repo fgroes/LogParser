@@ -58,6 +58,10 @@ class LogTableModel(QtCore.QAbstractTableModel):
     
     _column_count = 4
     _header_labels = ["Line number", "Log type", "Timestamp", "Message"]
+    _log_type_colors = {
+        "ERROR": (255, 0, 0, 200),
+        "WARN": (255, 125, 0, 130),
+        "INFO": (75, 255, 0, 80)}
     log_types_changed = QtCore.pyqtSignal()
     
     def __init__(self, file_name, parent=None, *args):        
@@ -140,9 +144,9 @@ class LogTableModel(QtCore.QAbstractTableModel):
                     result = self._log_entries[row].message
             elif role == QtCore.Qt.BackgroundColorRole:
                 log_type = self._log_entries[row].log_type
-                if log_type == "ERROR": result = QtGui.QBrush(QtGui.QColor(255, 0, 0, 200))
-                elif log_type == "WARN": result = QtGui.QBrush(QtGui.QColor(255, 125, 0, 130))
-                elif log_type == "INFO": result = QtGui.QBrush(QtGui.QColor(75, 255, 0, 80))
+                if log_type in self._log_type_colors:
+                    rgb_color = self._log_type_colors[log_type]
+                    result = QtGui.QBrush(QtGui.QColor(*rgb_color))
         return result
         
     def _load_data(self, update_log_types):
