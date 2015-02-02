@@ -57,6 +57,7 @@ class LogEntry(object):
 class LogTableModel(QtCore.QAbstractTableModel):
     
     _column_count = 4
+    _header_labels = ["Line number", "Log type", "Timestamp", "Message"]
     log_types_changed = QtCore.pyqtSignal()
     
     def __init__(self, file_name, parent=None, *args):        
@@ -116,6 +117,12 @@ class LogTableModel(QtCore.QAbstractTableModel):
     
     def columnCount(self, parent):
         return LogTableModel._column_count
+        
+    def headerData(self, section, orientation, role):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return self._header_labels[section]
+        return super(LogTableModel, self).headerData(section, orientation, role)
     
     def data(self, index, role):
         result = QtCore.QVariant()
