@@ -43,7 +43,7 @@ class LogParser(QtGui.QMainWindow):
         self.endDateTimeEdit.dateTimeChanged.connect(self._end_date_time_changed)
         
     def _file_button_clicked(self):
-        start_dir = r"D:\Projekte\EOS\Online\EOSTATEMeltpoolTest\TestData\201501231400TestOneJobSuccess\Log"
+        start_dir = "C:/"
         self.file_name = QtGui.QFileDialog.getOpenFileName(self, "Log file name", start_dir)
         self.fileLabel.setText(self.file_name)
         self._log_table_model.file_name = self.file_name
