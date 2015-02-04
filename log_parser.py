@@ -19,7 +19,7 @@ class LogParser(QtGui.QMainWindow):
     def _init_ui(self):
         uic.loadUi("log_parser.ui", self)
         self.actionOpen.triggered.connect(self._file_button_clicked)
-        self.searchLineEdit.textChanged.connect(self._regex_text_changed)
+        self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
         self._log_table_model = LogTableModel("")
         self._log_table_model.log_types_changed.connect(self._log_types_changed)
         self.logTableView.setModel(self._log_table_model)
