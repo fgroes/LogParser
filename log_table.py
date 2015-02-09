@@ -108,6 +108,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
     def _set_file_name(self, file_name):
         self._file_name = file_name
         self._load_data()
+        self.update()
         
     file_name = property(_get_file_name, _set_file_name)
        
