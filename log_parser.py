@@ -61,8 +61,11 @@ class LogParser(QtGui.QMainWindow):
         self.logTableView.horizontalHeader().setStretchLastSection(True)
              
     def _regex_text_changed(self):
-        self._log_table_model.regex_string = str(self.searchLineEdit.text())
-        self._format_log_table()
+        try:
+            self._log_table_model.regex_string = str(self.searchLineEdit.text())
+            self._format_log_table()
+        except Exception as e:
+            print("Regex text error: {0}".format(e.message))
         
     def _table_scrolled(self):
         self._format_log_table()
