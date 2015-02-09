@@ -73,6 +73,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._regex_string = ""
         self._log_types = []       
         self._log_entries = []
+        self._all_log_entries = []
         self.update()
         self._start_date_time = None
         self._end_date_time = None
@@ -106,7 +107,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         
     def _set_file_name(self, file_name):
         self._file_name = file_name
-        self.update()
+        self._load_data()
         
     file_name = property(_get_file_name, _set_file_name)
        
@@ -175,38 +176,42 @@ class LogTableModel(QtCore.QAbstractTableModel):
                     result = QtGui.QBrush(QtGui.QColor(*rgb_color))
         return result
         
-    def _load_data(self, update_log_types):
+    def _load_data(self):
+        with open(self.file_name, "r") as fid:
+            for i, line in enumerate(fid):
+                line_num = str(i + 1)
+                log_entry = LogEntry.from_log_line(line_num, line)
+                if log_entry:
+                    self._all_log_entries.append(log_entry)
+        
+    def _update_data(self, update_log_types):
         self._log_entries = []
         regex = re.compile(self._regex_string)           
         self._log_types = []
         try:
-            with open(self.file_name, "r") as fid:
-                for i, line in enumerate(fid):
-                    line_num = str(i + 1)
-                    log_entry = LogEntry.from_log_line(line_num, line)
-                    if log_entry:
-                        if self._start_date_time and self._start_date_time > log_entry.date_time:
-                            continue 
-                        if self._end_date_time and self._end_date_time < log_entry.date_time:
-                            continue
-                        if log_entry.log_type not in self._log_types:
-                            self._log_types.append(log_entry.log_type)
-                        if self._is_log_type_active \
-                            and self._current_log_type != log_entry.log_type and self._current_log_type != "":
-                            continue
-                        if self._regex_string == "":
-                            self._log_entries.append(log_entry)
-                        else:
-                            match = regex.search(log_entry.message)
-                            if (match):
-                                self._log_entries.append(log_entry)
+            for log_entry in self._all_log_entries:
+                if self._start_date_time and self._start_date_time > log_entry.date_time:
+                    continue 
+                if self._end_date_time and self._end_date_time < log_entry.date_time:
+                    continue
+                if log_entry.log_type not in self._log_types:
+                    self._log_types.append(log_entry.log_type)
+                if self._is_log_type_active \
+                    and self._current_log_type != log_entry.log_type and self._current_log_type != "":
+                    continue
+                if self._regex_string == "":
+                    self._log_entries.append(log_entry)
+                else:
+                    match = regex.search(log_entry.message)
+                    if (match):
+                        self._log_entries.append(log_entry)
             if update_log_types:
                 self.log_types_changed.emit()
         except Exception as e:
             print(e)
                             
     def update(self, update_log_types=True):
-        self._load_data(update_log_types)
+        self._update_data(update_log_types)
         idx_start = QtCore.QModelIndex()
         idx_start.row = 0
         idx_start.column = 0
