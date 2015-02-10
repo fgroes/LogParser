@@ -20,12 +20,13 @@ class LogParser(QtGui.QMainWindow):
         uic.loadUi("log_parser.ui", self)
         self.actionOpen.triggered.connect(self._file_button_clicked)
         self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
+        self.searchCheckBox.stateChanged.connect(self._search_check_box_changed)
         self._log_table_model = LogTableModel("")
         self._log_table_model.log_types_changed.connect(self._log_types_changed)
         self.logTableView.setModel(self._log_table_model)
         self.logTableView.verticalScrollBar().sliderReleased.connect(self._table_scrolled)
         self.logTypeComboBox.currentIndexChanged.connect(self._combo_box_selection_changed)
-        self.logTypeCheckBox.stateChanged.connect(self._check_box_changed)        
+        self.logTypeCheckBox.stateChanged.connect(self._log_type_check_box_changed)        
         self.startDateTimeEdit.setDisplayFormat(LogParser._dateTimeDisplayFormat)
         self.endDateTimeEdit.setDisplayFormat(LogParser._dateTimeDisplayFormat)
         now = datetime.datetime.now()
@@ -66,6 +67,10 @@ class LogParser(QtGui.QMainWindow):
             self._format_log_table()
         except Exception as e:
             print("Regex text error: {0}".format(e.message))
+            
+    def _search_check_box_changed(self):
+        self._log_table_model.is_search_active = self.searchCheckBox.isChecked()
+        self._format_log_table()
         
     def _table_scrolled(self):
         self._format_log_table()
@@ -74,7 +79,7 @@ class LogParser(QtGui.QMainWindow):
         self._log_table_model.log_type = self.logTypeComboBox.currentText()
         self._format_log_table()
             
-    def _check_box_changed(self):
+    def _log_type_check_box_changed(self):
         self._log_table_model.is_log_type_active = self.logTypeCheckBox.isChecked()
         self._format_log_table()
         

@@ -83,6 +83,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QCheckBox" name="searchCheckBox">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLineEdit" name="searchLineEdit"/>
         </item>
        </layout>

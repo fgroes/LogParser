@@ -71,6 +71,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._is_log_type_active = False
         self._update_log_types = False
         self._regex_string = ""
+        self._is_search_active = False
         self._log_types = []       
         self._log_entries = []
         self._all_log_entries = []
@@ -144,6 +145,15 @@ class LogTableModel(QtCore.QAbstractTableModel):
         
     regex_string = property(_get_regex_string, _set_regex_string)
     
+    def _get_is_search_active(self):
+        return self._is_search_active
+        
+    def _set_is_search_active(self, is_search_active):
+        self._is_search_active = is_search_active
+        self.update()
+        
+    is_search_active = property(_get_is_search_active, _set_is_search_active)
+    
     def rowCount(self, parent):
         return len(self._log_entries)
     
@@ -200,7 +210,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
                 if self._is_log_type_active \
                     and self._current_log_type != log_entry.log_type and self._current_log_type != "":
                     continue
-                if self._regex_string == "":
+                if not self._is_search_active or self._regex_string == "":
                     self._log_entries.append(log_entry)
                 else:
                     match = regex.search(log_entry.message)
