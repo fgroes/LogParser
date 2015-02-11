@@ -64,9 +64,9 @@ class LogTableModel(QtCore.QAbstractTableModel):
         "INFO": (75, 255, 0, 80)}
     log_types_changed = QtCore.pyqtSignal()
     
-    def __init__(self, file_name, parent=None, *args):        
+    def __init__(self, file_names, parent=None, *args):        
         super(LogTableModel, self).__init__(parent, *args)
-        self._file_name = file_name        
+        self._file_names = file_names        
         self._current_log_type = ""
         self._is_log_type_active = False
         self._update_log_types = False
@@ -85,6 +85,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
     def _set_start_date_time(self, date_time):
         if type(date_time) is datetime.datetime:
             self._start_date_time = date_time
+            self._load_data()
             self.update()
         else:
             self._start_date_time = None
@@ -97,21 +98,22 @@ class LogTableModel(QtCore.QAbstractTableModel):
     def _set_end_date_time(self, date_time):
         if type(date_time) is datetime.datetime:
             self._end_date_time = date_time
+            self._load_data()
             self.update()
         else:
             self._end_date_time = None
     
     end_date_time = property(_get_end_date_time, _set_end_date_time)           
 
-    def _get_file_name(self):
-        return self._file_name
+    def _get_file_names(self):
+        return self._file_names
         
-    def _set_file_name(self, file_name):
-        self._file_name = file_name
+    def _set_file_names(self, file_names):
+        self._file_names = file_names
         self._load_data()
         self.update()
         
-    file_name = property(_get_file_name, _set_file_name)
+    file_names = property(_get_file_names, _set_file_names)
        
     def _get_log_type(self):
         return self._current_log_type
@@ -188,25 +190,28 @@ class LogTableModel(QtCore.QAbstractTableModel):
         return result
         
     def _load_data(self):
-        with open(self.file_name, "r") as fid:
-            for i, line in enumerate(fid):
-                line_num = str(i + 1)
-                log_entry = LogEntry.from_log_line(line_num, line)
-                if log_entry:
-                    self._all_log_entries.append(log_entry)
+        self._all_log_entries = []
+        self._log_types = []
+        for file_name in self._file_names:
+            if file_name == "":
+                print("Warning: no filename specified")
+                continue
+            with open(file_name, "r") as fid:
+                for i, line in enumerate(fid):
+                    line_num = str(i + 1)
+                    log_entry = LogEntry.from_log_line(line_num, line)
+                    if log_entry:
+                        if self._start_date_time and self._start_date_time > log_entry.date_time: continue 
+                        if self._end_date_time and self._end_date_time < log_entry.date_time: continue
+                        self._all_log_entries.append(log_entry)
+                        if log_entry.log_type not in self._log_types:
+                            self._log_types.append(log_entry.log_type)
         
     def _update_data(self, update_log_types):
         self._log_entries = []
         regex = re.compile(self._regex_string)           
-        self._log_types = []
         try:
             for log_entry in self._all_log_entries:
-                if self._start_date_time and self._start_date_time > log_entry.date_time:
-                    continue 
-                if self._end_date_time and self._end_date_time < log_entry.date_time:
-                    continue
-                if log_entry.log_type not in self._log_types:
-                    self._log_types.append(log_entry.log_type)
                 if self._is_log_type_active \
                     and self._current_log_type != log_entry.log_type and self._current_log_type != "":
                     continue

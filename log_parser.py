@@ -4,8 +4,10 @@ Created on Thu Jan 29 15:26:00 2015
 """
 from PyQt4 import QtCore, QtGui, uic
 from log_table import LogTableModel
+import os
 import sys
 import datetime
+import re
 
 
 class LogParser(QtGui.QMainWindow):
@@ -21,7 +23,7 @@ class LogParser(QtGui.QMainWindow):
         self.actionOpen.triggered.connect(self._file_button_clicked)
         self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
         self.searchCheckBox.stateChanged.connect(self._search_check_box_changed)
-        self._log_table_model = LogTableModel("")
+        self._log_table_model = LogTableModel([""])
         self._log_table_model.log_types_changed.connect(self._log_types_changed)
         self.logTableView.setModel(self._log_table_model)
         self.logTableView.verticalScrollBar().sliderReleased.connect(self._table_scrolled)
@@ -47,8 +49,20 @@ class LogParser(QtGui.QMainWindow):
         start_dir = "C:/"
         self.file_name = QtGui.QFileDialog.getOpenFileName(self, "Log file name", start_dir)
         self.fileLabel.setText(self.file_name)
-        self._log_table_model.file_name = self.file_name
+        self._log_table_model.file_names = self._list_all_files(self.file_name)
         self._format_log_table()     
+    
+    def _list_all_files(self, full_file_name):
+        directory, file_name = os.path.split(str(full_file_name))
+        re_fn = re.compile("^(?P<file_name>{0}.\d+)$".format(file_name))
+        file_names = []
+        for path, _, files in os.walk(directory):
+            for file_name in files:
+                if re_fn.search(file_name):
+                    file_names.append(os.path.join(path, file_name))
+        file_names.sort(key=lambda s: s.split(".")[-1], reverse=True)
+        file_names.append(full_file_name)
+        return file_names
     
     def _log_types_changed(self):
         selected_log_type = self.logTypeComboBox.currentText()        
