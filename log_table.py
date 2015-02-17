@@ -194,7 +194,6 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._log_types = []
         for file_name in self._file_names:
             if file_name == "":
-                print("Warning: no filename specified")
                 continue
             with open(file_name, "r") as fid:
                 for i, line in enumerate(fid):
@@ -236,3 +235,23 @@ class LogTableModel(QtCore.QAbstractTableModel):
         idx_end.column = LogTableModel._column_count
 #        self.dataChanged.emit(idx_start, idx_end)
         self.layoutChanged.emit()     
+        
+    def plot_1D(self, regex_plot, vertical="y"):
+        re_plot = re.compile(regex_plot)
+        xs = []
+        ys = []
+        try:
+            for i, log_entry in enumerate(self._all_log_entries):
+                match = re_plot.search(log_entry.message)
+                if match:
+                    try:
+                        gd = match.groupdict()
+                        y = float(gd[vertical])
+                        ys.append(y)
+                        xs.append(log_entry.date_time)
+                    except Exception as e:
+                        print(e)
+            return xs, ys
+        except Exception as e:
+            print(e)
+            return None

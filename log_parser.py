@@ -2,12 +2,14 @@
 Created on Thu Jan 29 15:26:00 2015
 @author: f.groestlinger
 """
+
 from PyQt4 import QtCore, QtGui, uic
-from log_table import LogTableModel
+import matplotlib.pyplot as plt
 import os
 import sys
 import datetime
 import re
+from log_table import LogTableModel
 
 
 class LogParser(QtGui.QMainWindow):
@@ -21,6 +23,7 @@ class LogParser(QtGui.QMainWindow):
     def _init_ui(self):
         uic.loadUi("log_parser.ui", self)
         self.actionOpen.triggered.connect(self._file_button_clicked)
+        self.actionPlot_1D.triggered.connect(self._plot_1D_value)
         self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
         self.searchCheckBox.stateChanged.connect(self._search_check_box_changed)
         self._log_table_model = LogTableModel([""])
@@ -38,10 +41,14 @@ class LogParser(QtGui.QMainWindow):
         self._log_table_model.end_date_time = end
         self.startDateTimeEdit.setDateTime(QtCore.QDateTime(start.year, start.month, start.day, start.hour, start.minute, start.second))
         self.endDateTimeEdit.setDateTime(QtCore.QDateTime(end.year, end.month, end.day, end.hour, end.minute, end.second))
-        self.startDateTimeEdit.setCalendarPopup(True)
-        self.startDateTimeEdit.setCalendarWidget(QtGui.QCalendarWidget())
-        self.endDateTimeEdit.setCalendarPopup(True)
-        self.endDateTimeEdit.setCalendarWidget(QtGui.QCalendarWidget())
+#        self.startDateTimeEdit.setCalendarPopup(True)
+        cal1 = QtGui.QCalendarWidget()
+        cal1.setFirstDayOfWeek(QtCore.Qt.Monday)
+        self.startDateTimeEdit.setCalendarWidget(cal1)
+#        self.endDateTimeEdit.setCalendarPopup(True)
+        cal2 = QtGui.QCalendarWidget()
+        cal2.setFirstDayOfWeek(QtCore.Qt.Monday)
+        self.endDateTimeEdit.setCalendarWidget(cal2)
         self.startDateTimeEdit.dateTimeChanged.connect(self._start_date_time_changed)
         self.endDateTimeEdit.dateTimeChanged.connect(self._end_date_time_changed)
         
@@ -115,6 +122,15 @@ class LogParser(QtGui.QMainWindow):
         dt = datetime.datetime(date.year(), date.month(), date.day(),
             time.hour(), time.minute(), time.second())
         return dt        
+        
+    def _plot_1D_value(self):
+        regex_plot = str(self.searchLineEdit.text())
+        x, y = self._log_table_model.plot_1D(regex_plot, vertical="y")
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(x, y, "ko-")
+        fig.autofmt_xdate()
+        fig.show()
                 
         
 if __name__ == "__main__":

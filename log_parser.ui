@@ -50,10 +50,18 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QDateTimeEdit" name="startDateTimeEdit"/>
+         <widget class="QDateTimeEdit" name="startDateTimeEdit">
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
-         <widget class="QDateTimeEdit" name="endDateTimeEdit"/>
+         <widget class="QDateTimeEdit" name="endDateTimeEdit">
+          <property name="calendarPopup">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -116,12 +124,24 @@
     </property>
     <addaction name="actionOpen"/>
    </widget>
+   <widget class="QMenu" name="menuEvaluate">
+    <property name="title">
+     <string>Evaluate</string>
+    </property>
+    <addaction name="actionPlot_1D"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEvaluate"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionPlot_1D">
+   <property name="text">
+    <string>Plot 1D &lt;y&gt;</string>
    </property>
   </action>
  </widget>
