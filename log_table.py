@@ -193,6 +193,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._all_log_entries = []
         self._log_types = []
         for file_name in self._file_names:
+            print("Reading file: {0}".format(file_name))
             if file_name == "":
                 continue
             with open(file_name, "r") as fid:
@@ -236,22 +237,24 @@ class LogTableModel(QtCore.QAbstractTableModel):
 #        self.dataChanged.emit(idx_start, idx_end)
         self.layoutChanged.emit()     
         
-    def plot_1D(self, regex_plot, vertical="y"):
+    def plot_regex_groups(self, regex_plot):
         re_plot = re.compile(regex_plot)
-        xs = []
+        ts = []
         ys = []
         try:
-            for i, log_entry in enumerate(self._all_log_entries):
+            for log_entry in self._all_log_entries:
                 match = re_plot.search(log_entry.message)
                 if match:
-                    try:
-                        gd = match.groupdict()
-                        y = float(gd[vertical])
-                        ys.append(y)
-                        xs.append(log_entry.date_time)
-                    except Exception as e:
-                        print(e)
-            return xs, ys
+                    gs = match.groups()
+                    for j, g in enumerate(gs):
+                        if g:
+                            while j >= len(ys):
+                                ys.append([])
+                            while j >= len(ts):
+                                ts.append([])         
+                            ys[j].append(float(g))        
+                            ts[j].append(log_entry.date_time)
+            return ts, ys
         except Exception as e:
             print(e)
             return None

@@ -10,6 +10,7 @@ import sys
 import datetime
 import re
 from log_table import LogTableModel
+import itertools
 
 
 class LogParser(QtGui.QMainWindow):
@@ -23,7 +24,7 @@ class LogParser(QtGui.QMainWindow):
     def _init_ui(self):
         uic.loadUi("log_parser.ui", self)
         self.actionOpen.triggered.connect(self._file_button_clicked)
-        self.actionPlot_1D.triggered.connect(self._plot_1D_value)
+        self.actionPlotRegexGroups.triggered.connect(self._plot_regex_groups)
         self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
         self.searchCheckBox.stateChanged.connect(self._search_check_box_changed)
         self._log_table_model = LogTableModel([""])
@@ -67,7 +68,7 @@ class LogParser(QtGui.QMainWindow):
             for file_name in files:
                 if re_fn.search(file_name):
                     file_names.append(os.path.join(path, file_name))
-        file_names.sort(key=lambda s: s.split(".")[-1], reverse=True)
+        file_names.sort(key=lambda s: int(s.split(".")[-1]), reverse=True)
         file_names.append(full_file_name)
         return file_names
     
@@ -123,14 +124,21 @@ class LogParser(QtGui.QMainWindow):
             time.hour(), time.minute(), time.second())
         return dt        
         
-    def _plot_1D_value(self):
+    def _plot_regex_groups(self):
         regex_plot = str(self.searchLineEdit.text())
-        x, y = self._log_table_model.plot_1D(regex_plot, vertical="y")
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        ax.plot(x, y, "ko-")
-        fig.autofmt_xdate()
-        fig.show()
+        ts, ys = self._log_table_model.plot_regex_groups(regex_plot)
+        marker = itertools.cycle(('o', 's', 'v', '^', 'd', '>', '<')) 
+        if ts and ys:
+            try:
+                fig = plt.figure()
+                ax = fig.add_subplot(1, 1, 1)
+                for i, (t, y) in enumerate(zip(ts, ys)):
+                    ax.plot(t, y, ls="-", marker=marker.next(), label="{0}".format(i + 1))
+                ax.legend()
+                fig.autofmt_xdate()
+                fig.show()
+            except Exception as e:
+                print("Error: {0}".format(e))
                 
         
 if __name__ == "__main__":

@@ -128,7 +128,7 @@
     <property name="title">
      <string>Evaluate</string>
     </property>
-    <addaction name="actionPlot_1D"/>
+    <addaction name="actionPlotRegexGroups"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEvaluate"/>
@@ -139,9 +139,9 @@
     <string>Open</string>
    </property>
   </action>
-  <action name="actionPlot_1D">
+  <action name="actionPlotRegexGroups">
    <property name="text">
-    <string>Plot 1D &lt;y&gt;</string>
+    <string>Plot regex groups</string>
    </property>
   </action>
  </widget>
