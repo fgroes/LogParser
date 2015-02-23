@@ -52,6 +52,38 @@ class LogEntry(object):
             
     def __str__(self):
         return "{0}) {1}: {2} {3}".format(self.line_num, self.date_time, self.log_type, self.message)
+        
+        
+class LoadDataThread(QtCore.QThread):
+    
+    data_loaded = QtCore.pyqtSignal()
+    
+    def __init__(self, file_names, start_date_time, end_date_time):
+        super(LoadDataThread, self).__init__()
+        self._file_names = file_names
+        self._start_date_time = start_date_time
+        self._end_date_time = end_date_time
+        self.all_log_entries = []
+        self.log_types = []       
+        
+    def run(self):
+        self.all_log_entries = []
+        self.log_types = []
+        for file_name in self._file_names:
+            print("Reading file: {0}".format(file_name))
+            if file_name == "":
+                continue
+            with open(file_name, "r") as fid:
+                for i, line in enumerate(fid):
+                    line_num = str(i + 1)
+                    log_entry = LogEntry.from_log_line(line_num, line)
+                    if log_entry:
+                        if self._start_date_time and self._start_date_time > log_entry.date_time: continue 
+                        if self._end_date_time and self._end_date_time < log_entry.date_time: continue
+                        self.all_log_entries.append(log_entry)
+                        if log_entry.log_type not in self._log_types:
+                            self.log_types.append(log_entry.log_type)
+        self.data_loaded.emit()
             
             
 class LogTableModel(QtCore.QAbstractTableModel):
@@ -78,6 +110,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self.update()
         self._start_date_time = None
         self._end_date_time = None
+        self._load_data_threads = []
         
     def _get_start_date_time(self, date_time):
         return self._start_date_time
@@ -190,22 +223,18 @@ class LogTableModel(QtCore.QAbstractTableModel):
         return result
         
     def _load_data(self):
-        self._all_log_entries = []
-        self._log_types = []
-        for file_name in self._file_names:
-            print("Reading file: {0}".format(file_name))
-            if file_name == "":
-                continue
-            with open(file_name, "r") as fid:
-                for i, line in enumerate(fid):
-                    line_num = str(i + 1)
-                    log_entry = LogEntry.from_log_line(line_num, line)
-                    if log_entry:
-                        if self._start_date_time and self._start_date_time > log_entry.date_time: continue 
-                        if self._end_date_time and self._end_date_time < log_entry.date_time: continue
-                        self._all_log_entries.append(log_entry)
-                        if log_entry.log_type not in self._log_types:
-                            self._log_types.append(log_entry.log_type)
+        load_data_thread = LoadDataThread(self._file_names, self._start_date_time, self._end_date_time)
+        load_data_thread.data_loaded.connect(self._on_data_loaded)
+        load_data_thread.start()
+        self._load_data_threads.append(load_data_thread)
+   
+    def _on_data_loaded(self):
+        print("on data loaded")
+        print(len(self._load_data_threads))
+        load_data_thread = self._load_data_threads.pop()
+        self._all_log_entries = load_data_thread.all_log_entries
+        self._log_types = load_data_thread.log_types
+        self.update()
         
     def _update_data(self, update_log_types):
         self._log_entries = []
