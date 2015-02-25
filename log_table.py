@@ -54,21 +54,25 @@ class LogEntry(object):
         return "{0}) {1}: {2} {3}".format(self.line_num, self.date_time, self.log_type, self.message)
         
         
+class LogEntries(object):
+
+    def __init__(self):
+        self.all_log_entries = []
+        self.log_types = []        
+        
+        
 class LoadDataThread(QtCore.QThread):
     
-    data_loaded = QtCore.pyqtSignal()
+    data_loaded = QtCore.pyqtSignal(type(LogEntries))
     
     def __init__(self, file_names, start_date_time, end_date_time):
         super(LoadDataThread, self).__init__()
         self._file_names = file_names
         self._start_date_time = start_date_time
         self._end_date_time = end_date_time
-        self.all_log_entries = []
-        self.log_types = []       
+        self._log_entries = LogEntries()      
         
     def run(self):
-        self.all_log_entries = []
-        self.log_types = []
         for file_name in self._file_names:
             print("Reading file: {0}".format(file_name))
             if file_name == "":
@@ -80,10 +84,10 @@ class LoadDataThread(QtCore.QThread):
                     if log_entry:
                         if self._start_date_time and self._start_date_time > log_entry.date_time: continue 
                         if self._end_date_time and self._end_date_time < log_entry.date_time: continue
-                        self.all_log_entries.append(log_entry)
-                        if log_entry.log_type not in self._log_types:
-                            self.log_types.append(log_entry.log_type)
-        self.data_loaded.emit()
+                        self._log_entries.all_log_entries.append(log_entry)
+                        if log_entry.log_type not in self._log_entries.log_types:
+                            self._log_entries.log_types.append(log_entry.log_type)
+        self.data_loaded.emit(self._log_entries)
             
             
 class LogTableModel(QtCore.QAbstractTableModel):
@@ -119,7 +123,6 @@ class LogTableModel(QtCore.QAbstractTableModel):
         if type(date_time) is datetime.datetime:
             self._start_date_time = date_time
             self._load_data()
-            self.update()
         else:
             self._start_date_time = None
     
@@ -132,7 +135,6 @@ class LogTableModel(QtCore.QAbstractTableModel):
         if type(date_time) is datetime.datetime:
             self._end_date_time = date_time
             self._load_data()
-            self.update()
         else:
             self._end_date_time = None
     
@@ -144,7 +146,6 @@ class LogTableModel(QtCore.QAbstractTableModel):
     def _set_file_names(self, file_names):
         self._file_names = file_names
         self._load_data()
-        self.update()
         
     file_names = property(_get_file_names, _set_file_names)
        
@@ -225,15 +226,13 @@ class LogTableModel(QtCore.QAbstractTableModel):
     def _load_data(self):
         load_data_thread = LoadDataThread(self._file_names, self._start_date_time, self._end_date_time)
         load_data_thread.data_loaded.connect(self._on_data_loaded)
-        load_data_thread.start()
         self._load_data_threads.append(load_data_thread)
+        load_data_thread.start()       
    
-    def _on_data_loaded(self):
+    def _on_data_loaded(self, log_entries):
         print("on data loaded")
-        print(len(self._load_data_threads))
-        load_data_thread = self._load_data_threads.pop()
-        self._all_log_entries = load_data_thread.all_log_entries
-        self._log_types = load_data_thread.log_types
+        self._all_log_entries = log_entries.all_log_entries
+        self._log_types = log_entries.log_types
         self.update()
         
     def _update_data(self, update_log_types):
