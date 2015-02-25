@@ -63,7 +63,7 @@ class LogEntries(object):
         
 class LoadDataThread(QtCore.QThread):
     
-    data_loaded = QtCore.pyqtSignal(type(LogEntries))
+    data_loaded = QtCore.pyqtSignal(LogEntries)
     
     def __init__(self, file_names, start_date_time, end_date_time):
         super(LoadDataThread, self).__init__()
@@ -230,7 +230,6 @@ class LogTableModel(QtCore.QAbstractTableModel):
         load_data_thread.start()       
    
     def _on_data_loaded(self, log_entries):
-        print("on data loaded")
         self._all_log_entries = log_entries.all_log_entries
         self._log_types = log_entries.log_types
         self.update()
