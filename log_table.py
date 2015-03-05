@@ -99,6 +99,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         "WARN": (255, 125, 0, 130),
         "INFO": (75, 255, 0, 80)}
     log_types_changed = QtCore.pyqtSignal()
+    table_format_changed = QtCore.pyqtSignal()
     
     def __init__(self, file_names, parent=None, *args):        
         super(LogTableModel, self).__init__(parent, *args)
@@ -261,8 +262,8 @@ class LogTableModel(QtCore.QAbstractTableModel):
         idx_end = QtCore.QModelIndex()
         idx_end.row = len(self._log_entries)
         idx_end.column = LogTableModel._column_count
-#        self.dataChanged.emit(idx_start, idx_end)
-        self.layoutChanged.emit()     
+        self.layoutChanged.emit()
+        self.table_format_changed.emit()
         
     def plot_regex_groups(self, regex_plot):
         re_plot = re.compile(regex_plot)

@@ -28,9 +28,10 @@ class LogParser(QtGui.QMainWindow):
         self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
         self.searchCheckBox.stateChanged.connect(self._search_check_box_changed)
         self._log_table_model = LogTableModel([""])
-        self._log_table_model.log_types_changed.connect(self._log_types_changed)
+        self._log_table_model.log_types_changed.connect(self._log_types_changed)        
         self.logTableView.setModel(self._log_table_model)
         self.logTableView.verticalScrollBar().sliderReleased.connect(self._table_scrolled)
+        self._log_table_model.table_format_changed.connect(self._format_log_table)
         self.logTypeComboBox.currentIndexChanged.connect(self._combo_box_selection_changed)
         self.logTypeCheckBox.stateChanged.connect(self._log_type_check_box_changed)        
         self.startDateTimeEdit.setDisplayFormat(LogParser._dateTimeDisplayFormat)
@@ -42,11 +43,9 @@ class LogParser(QtGui.QMainWindow):
         self._log_table_model.end_date_time = end
         self.startDateTimeEdit.setDateTime(QtCore.QDateTime(start.year, start.month, start.day, start.hour, start.minute, start.second))
         self.endDateTimeEdit.setDateTime(QtCore.QDateTime(end.year, end.month, end.day, end.hour, end.minute, end.second))
-#        self.startDateTimeEdit.setCalendarPopup(True)
         cal1 = QtGui.QCalendarWidget()
         cal1.setFirstDayOfWeek(QtCore.Qt.Monday)
         self.startDateTimeEdit.setCalendarWidget(cal1)
-#        self.endDateTimeEdit.setCalendarPopup(True)
         cal2 = QtGui.QCalendarWidget()
         cal2.setFirstDayOfWeek(QtCore.Qt.Monday)
         self.endDateTimeEdit.setCalendarWidget(cal2)
@@ -58,7 +57,7 @@ class LogParser(QtGui.QMainWindow):
         self.file_name = QtGui.QFileDialog.getOpenFileName(self, "Log file name", start_dir)
         self.fileLabel.setText(self.file_name)
         self._log_table_model.file_names = self._list_all_files(self.file_name)
-        self._format_log_table()     
+        self._format_log_table()   
     
     def _list_all_files(self, full_file_name):
         directory, file_name = os.path.split(str(full_file_name))
@@ -92,30 +91,25 @@ class LogParser(QtGui.QMainWindow):
             
     def _search_check_box_changed(self):
         self._log_table_model.is_search_active = self.searchCheckBox.isChecked()
-        self._format_log_table()
         
     def _table_scrolled(self):
         self._format_log_table()
         
     def _combo_box_selection_changed(self):
         self._log_table_model.log_type = self.logTypeComboBox.currentText()
-        self._format_log_table()
             
     def _log_type_check_box_changed(self):
         self._log_table_model.is_log_type_active = self.logTypeCheckBox.isChecked()
-        self._format_log_table()
         
     def _start_date_time_changed(self, dateTime):
         start = self.startDateTimeEdit.dateTime()
         start_date_time = self._qdateTime_to_datetime(start)     
         self._log_table_model.start_date_time = start_date_time
-        self._format_log_table()
         
     def _end_date_time_changed(self, dateTime):
         end = self.endDateTimeEdit.dateTime()
         end_date_time = self._qdateTime_to_datetime(end)     
         self._log_table_model.end_date_time = end_date_time
-        self._format_log_table() 
         
     def _qdateTime_to_datetime(self, date_time):
         date = date_time.date()
