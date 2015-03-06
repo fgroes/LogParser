@@ -143,7 +143,7 @@ if __name__ == "__main__":
     fh.setFormatter(fmt)
     logger = logging.getLogger(name="main")
     logger.addHandler(fh)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     app = QtGui.QApplication(sys.argv)
     mw = LogParser()
     mw.show()

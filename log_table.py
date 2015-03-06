@@ -240,9 +240,17 @@ class LogTableModel(QtCore.QAbstractTableModel):
         
     def _update_data(self, update_log_types):
         self._log_entries = []
+#        re_words = re.compile("[A-z]+")
+#        self._unique_words = {}
         regex = re.compile(self._regex_string)           
         try:
             for log_entry in self._all_log_entries:
+#                words = re_words.findall(log_entry.message)
+#                for word in words:
+#                    if word not in self._unique_words:
+#                        self._unique_words[word] = 1
+#                    else:
+#                        self._unique_words[word] += 1
                 if self._is_log_type_active \
                     and self._current_log_type != log_entry.log_type and self._current_log_type != "":
                     continue
@@ -252,6 +260,9 @@ class LogTableModel(QtCore.QAbstractTableModel):
                     match = regex.search(log_entry.message)
                     if (match):
                         self._log_entries.append(log_entry)
+#            unique_words_list = [(k, v) for k, v in self._unique_words.iteritems()]
+#            sorted_unique_words = sorted(unique_words_list, key=lambda x: x[1], reverse=True)
+#            self._log.debug("\n".join("{0}: {1}".format(x[0], x[1]) for x in sorted_unique_words))
             if update_log_types:
                 self.log_types_changed.emit()
         except Exception as e:
