@@ -5,6 +5,7 @@ Created on Fri Jan 30 16:08:20 2015
 from PyQt4 import QtCore, QtGui
 import re
 import datetime
+import logging
 
 
 re_line = re.compile(r"^(?P<log_type>[\w ]{8}):\ (?P<date>\d{4}-\d{2}-\d{2}\ \d{2}:\d{2}:\d{2}(.\d*)?): (?P<message>.*)$")
@@ -66,15 +67,16 @@ class LoadDataThread(QtCore.QThread):
     data_loaded = QtCore.pyqtSignal(LogEntries)
     
     def __init__(self, file_names, start_date_time, end_date_time):
+        self._log = logging.getLogger(name="main")
         super(LoadDataThread, self).__init__()
         self._file_names = file_names
         self._start_date_time = start_date_time
         self._end_date_time = end_date_time
-        self._log_entries = LogEntries()      
+        self._log_entries = LogEntries()            
         
     def run(self):
         for file_name in self._file_names:
-            print("Reading file: {0}".format(file_name))
+            self._log.info("Reading file: {0}".format(file_name))
             if file_name == "":
                 continue
             with open(file_name, "r") as fid:
@@ -101,7 +103,8 @@ class LogTableModel(QtCore.QAbstractTableModel):
     log_types_changed = QtCore.pyqtSignal()
     table_format_changed = QtCore.pyqtSignal()
     
-    def __init__(self, file_names, parent=None, *args):        
+    def __init__(self, file_names, parent=None, *args):   
+        self._log = logging.getLogger(name="main")
         super(LogTableModel, self).__init__(parent, *args)
         self._file_names = file_names        
         self._current_log_type = ""
@@ -115,7 +118,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self.update()
         self._start_date_time = None
         self._end_date_time = None
-        self._load_data_threads = []
+        self._load_data_threads = []        
         
     def _get_start_date_time(self, date_time):
         return self._start_date_time
@@ -252,7 +255,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
             if update_log_types:
                 self.log_types_changed.emit()
         except Exception as e:
-            print(e)
+            self._log.error(e)
                             
     def update(self, update_log_types=True):
         self._update_data(update_log_types)
@@ -284,5 +287,5 @@ class LogTableModel(QtCore.QAbstractTableModel):
                             ts[j].append(log_entry.date_time)
             return ts, ys
         except Exception as e:
-            print(e)
+            self._log.error(e)
             return None

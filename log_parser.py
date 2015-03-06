@@ -11,13 +11,15 @@ import datetime
 import re
 from log_table import LogTableModel
 import itertools
+import logging
 
 
 class LogParser(QtGui.QMainWindow):
     
     _dateTimeDisplayFormat = "yyyy-MM-dd hh:mm:ss"
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None):       
+        self._log = logging.getLogger(name="main")
         super(LogParser, self).__init__(parent)
         self._init_ui()
         
@@ -87,7 +89,7 @@ class LogParser(QtGui.QMainWindow):
             self._log_table_model.regex_string = str(self.searchLineEdit.text())
             self._format_log_table()
         except Exception as e:
-            print("Regex text error: {0}".format(e.message))
+            logging.error("Regex text error: {0}".format(e.message))
             
     def _search_check_box_changed(self):
         self._log_table_model.is_search_active = self.searchCheckBox.isChecked()
@@ -132,10 +134,16 @@ class LogParser(QtGui.QMainWindow):
                 fig.autofmt_xdate()
                 fig.show()
             except Exception as e:
-                print("Error: {0}".format(e))
+                logging.error("Error: {0}".format(e))
                 
         
 if __name__ == "__main__":
+    fh = logging.FileHandler("trace.log")
+    fmt = logging.Formatter("%(levelname)s %(asctime)s: %(message)s")
+    fh.setFormatter(fmt)
+    logger = logging.getLogger(name="main")
+    logger.addHandler(fh)
+    logger.setLevel(logging.INFO)
     app = QtGui.QApplication(sys.argv)
     mw = LogParser()
     mw.show()
