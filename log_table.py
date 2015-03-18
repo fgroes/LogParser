@@ -282,8 +282,11 @@ class LogTableModel(QtCore.QAbstractTableModel):
                             while j >= len(ys):
                                 ys.append([])
                             while j >= len(ts):
-                                ts.append([])         
-                            ys[j].append(float(g))        
+                                ts.append([])
+                            try:
+                                ys[j].append(float(g))
+                            except:
+                                ys[j].append(0.0)
                             ts[j].append(log_entry.date_time)
             return ts, ys
         except Exception as e:
