@@ -43,6 +43,8 @@ class LogParser(QtGui.QMainWindow):
         end = now + datetime.timedelta(0, 3600)
         self._log_table_model.start_date_time = start
         self._log_table_model.end_date_time = end
+        self.fileProgressBar.setRange(0, 100)
+        self._log_table_model.file_progress_changed.connect(self.fileProgressBar.setValue)
         self.startDateTimeEdit.setDateTime(QtCore.QDateTime(start.year, start.month, start.day, start.hour, start.minute, start.second))
         self.endDateTimeEdit.setDateTime(QtCore.QDateTime(end.year, end.month, end.day, end.hour, end.minute, end.second))
         cal1 = QtGui.QCalendarWidget()

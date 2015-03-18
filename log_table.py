@@ -65,6 +65,7 @@ class LogEntries(object):
 class LoadDataThread(QtCore.QThread):
     
     data_loaded = QtCore.pyqtSignal(LogEntries)
+    file_progress_changed = QtCore.pyqtSignal(int)
     
     def __init__(self, file_names, start_date_time, end_date_time):
         self._log = logging.getLogger(name="main")
@@ -72,10 +73,11 @@ class LoadDataThread(QtCore.QThread):
         self._file_names = file_names
         self._start_date_time = start_date_time
         self._end_date_time = end_date_time
-        self._log_entries = LogEntries()            
+        self._log_entries = LogEntries()
         
     def run(self):
-        for file_name in self._file_names:
+        self.file_progress_changed.emit(0)
+        for j, file_name in enumerate(self._file_names):            
             self._log.info("Reading file: {0}".format(file_name))
             if file_name == "":
                 continue
@@ -89,6 +91,8 @@ class LoadDataThread(QtCore.QThread):
                         self._log_entries.all_log_entries.append(log_entry)
                         if log_entry.log_type not in self._log_entries.log_types:
                             self._log_entries.log_types.append(log_entry.log_type)
+            progress = int((j + 1) * 100 / len(self._file_names))
+            self.file_progress_changed.emit(progress)
         self.data_loaded.emit(self._log_entries)
             
             
@@ -102,6 +106,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
         "INFO": (75, 255, 0, 80)}
     log_types_changed = QtCore.pyqtSignal()
     table_format_changed = QtCore.pyqtSignal()
+    file_progress_changed = QtCore.pyqtSignal(int)
     
     def __init__(self, file_names, parent=None, *args):   
         self._log = logging.getLogger(name="main")
@@ -230,6 +235,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
     def _load_data(self):
         load_data_thread = LoadDataThread(self._file_names, self._start_date_time, self._end_date_time)
         load_data_thread.data_loaded.connect(self._on_data_loaded)
+        load_data_thread.file_progress_changed.connect(self._on_file_progress_changed)
         self._load_data_threads.append(load_data_thread)
         load_data_thread.start()       
    
@@ -237,6 +243,9 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._all_log_entries = log_entries.all_log_entries
         self._log_types = log_entries.log_types
         self.update()
+        
+    def _on_file_progress_changed(self, value):
+        self.file_progress_changed.emit(value)
         
     def _update_data(self, update_log_types):
         self._log_entries = []

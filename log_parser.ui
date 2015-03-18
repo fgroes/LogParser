@@ -45,6 +45,28 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QProgressBar" name="fileProgressBar">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>200</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+          <property name="textVisible">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -103,7 +125,11 @@
        </layout>
       </item>
       <item>
-       <widget class="QTableView" name="logTableView"/>
+       <widget class="QTableView" name="logTableView">
+        <property name="showGrid">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
