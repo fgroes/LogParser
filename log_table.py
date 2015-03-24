@@ -108,24 +108,20 @@ class LoadDataThread(QtCore.QThread):
         self.file_progress_changed.emit(0)
         self._file_names_in_time_range = []
         for file_name in self._file_names:
-            print(file_name)
-            with open(file_name, "r") as fid:                 
-                first_line = fid.readline()
-                print(first_line)
-            with open(file_name, "rb") as fid:    
-                last_line = tail(fid, window=1)[0]
-                print(last_line)
-                first_log_entry = LogEntry.from_log_line(0, first_line)
-                print(first_log_entry)
-                last_log_entry = LogEntry.from_log_line(0, last_line)
-                print(last_log_entry)
                 try:
-                    if self._start_date_time and self._end_date_time:
-                        if not first_log_entry.date_time > self._end_date_time and not last_log_entry.date_time < self._start_date_time:
-                            self._file_names_in_time_range.append(file_name)
+                    if self._start_date_time:
+                        with open(file_name, "r") as fid:                 
+                            first_line = fid.readline()
+                            first_log_entry = LogEntry.from_log_line(0, first_line)
+                        if first_log_entry.date_time > self._end_date_time: continue
+                    if self._end_date_time:
+                        with open(file_name, "rb") as fid:    
+                            last_line = tail(fid, window=1)[0]
+                            last_log_entry = LogEntry.from_log_line(0, last_line)
+                        if last_log_entry.date_time < self._start_date_time: continue
+                    self._file_names_in_time_range.append(file_name)
                 except Exception as e:
                     print("Error: {0}".format(e))
-        print(self._file_names_in_time_range)
         for j, file_name in enumerate(self._file_names_in_time_range):                                
             self._log.info("Reading file: {0}".format(file_name))
             if file_name == "":
