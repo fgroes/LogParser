@@ -12,6 +12,35 @@ re_line = re.compile(r"^(?P<log_type>[\w ]{8}):\ (?P<date>\d{4}-\d{2}-\d{2}\ \d{
 re_date = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\ (?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>[\d.]+)$")
 
 
+def tail(f, window=20):
+    """
+    Returns the last `window` lines of file `f` as a list.
+    """
+    if window == 0:
+        return []
+    BUFSIZ = 1024
+    f.seek(0, 2)
+    bytes = f.tell()
+    size = window + 1
+    block = -1
+    data = []
+    while size > 0 and bytes > 0:
+        if bytes - BUFSIZ > 0:
+            # Seek back one whole BUFSIZ
+            f.seek(block * BUFSIZ, 2)
+            # read BUFFER
+            data.insert(0, f.read(BUFSIZ))
+        else:
+            # file too small, start from begining
+            f.seek(0,0)
+            # only read what was not read
+            data.insert(0, f.read(bytes))
+        linesFound = data[0].count('\n')
+        size -= linesFound
+        bytes -= BUFSIZ
+        block -= 1
+    return ''.join(data).splitlines()[-window:]
+
 def stringToDateTime(date_time_string):
     match = re_date.search(date_time_string)
     if match:
@@ -77,7 +106,27 @@ class LoadDataThread(QtCore.QThread):
         
     def run(self):
         self.file_progress_changed.emit(0)
-        for j, file_name in enumerate(self._file_names):            
+        self._file_names_in_time_range = []
+        for file_name in self._file_names:
+            print(file_name)
+            with open(file_name, "r") as fid:                 
+                first_line = fid.readline()
+                print(first_line)
+            with open(file_name, "rb") as fid:    
+                last_line = tail(fid, window=1)[0]
+                print(last_line)
+                first_log_entry = LogEntry.from_log_line(0, first_line)
+                print(first_log_entry)
+                last_log_entry = LogEntry.from_log_line(0, last_line)
+                print(last_log_entry)
+                try:
+                    if self._start_date_time and self._end_date_time:
+                        if not first_log_entry.date_time > self._end_date_time and not last_log_entry.date_time < self._start_date_time:
+                            self._file_names_in_time_range.append(file_name)
+                except Exception as e:
+                    print("Error: {0}".format(e))
+        print(self._file_names_in_time_range)
+        for j, file_name in enumerate(self._file_names_in_time_range):                                
             self._log.info("Reading file: {0}".format(file_name))
             if file_name == "":
                 continue
@@ -91,7 +140,7 @@ class LoadDataThread(QtCore.QThread):
                         self._log_entries.all_log_entries.append(log_entry)
                         if log_entry.log_type not in self._log_entries.log_types:
                             self._log_entries.log_types.append(log_entry.log_type)
-            progress = int((j + 1) * 100 / len(self._file_names))
+            progress = int((j + 1) * 100 / len(self._file_names_in_time_range))
             self.file_progress_changed.emit(progress)
         self.data_loaded.emit(self._log_entries)
             
