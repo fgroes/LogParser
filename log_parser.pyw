@@ -29,6 +29,8 @@ class LogParser(QtGui.QMainWindow):
         self.actionPlotRegexGroups.triggered.connect(self._plot_regex_groups)
         self.searchLineEdit.editingFinished.connect(self._regex_text_changed)
         self.searchCheckBox.stateChanged.connect(self._search_check_box_changed)
+        self.removeLineEdit.editingFinished.connect(self._remove_regex_changed)
+        self.removeCheckBox.stateChanged.connect(self._remove_check_box_changed)
         self._log_table_model = LogTableModel([""])
         self._log_table_model.log_types_changed.connect(self._log_types_changed)        
         self.logTableView.setModel(self._log_table_model)
@@ -93,8 +95,18 @@ class LogParser(QtGui.QMainWindow):
         except Exception as e:
             logging.error("Regex text error: {0}".format(e.message))
             
+    def _remove_regex_changed(self):
+        try:
+            self._log_table_model.remove_regex_string = str(self.removeLineEdit.text())
+            self._format_log_table()
+        except Exception as e:
+            logging.error("Regex text error: {0}".format(e.message))       
+            
     def _search_check_box_changed(self):
         self._log_table_model.is_search_active = self.searchCheckBox.isChecked()
+        
+    def _remove_check_box_changed(self):
+        self._log_table_model.is_remove_active = self.removeCheckBox.isChecked()
         
     def _table_scrolled(self):
         self._format_log_table()

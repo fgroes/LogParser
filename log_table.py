@@ -162,6 +162,8 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self._update_log_types = False
         self._regex_string = ""
         self._is_search_active = False
+        self._remove_regex_string = ""
+        self._is_remove_active = False
         self._log_types = []       
         self._log_entries = []
         self._all_log_entries = []
@@ -244,6 +246,24 @@ class LogTableModel(QtCore.QAbstractTableModel):
         
     is_search_active = property(_get_is_search_active, _set_is_search_active)
     
+    def _get_remove_regex_string(self):
+        return self._remove_regex_string
+        
+    def _set_remove_regex_string(self, regex_string):
+        self._remove_regex_string = str(regex_string)
+        self.update()
+        
+    remove_regex_string = property(_get_remove_regex_string, _set_remove_regex_string)
+        
+    def _get_is_remove_active(self):
+        return self._is_remove_active
+        
+    def _set_is_remove_active(self, is_remove_active):
+        self._is_remove_active = str(is_remove_active)
+        self.update()
+    
+    is_remove_active = property(_get_is_remove_active, _set_is_remove_active)
+    
     def rowCount(self, parent):
         return len(self._log_entries)
     
@@ -294,18 +314,22 @@ class LogTableModel(QtCore.QAbstractTableModel):
         
     def _update_data(self, update_log_types):
         self._log_entries = []
-        regex = re.compile(self._regex_string)           
+        regex = re.compile(self._regex_string)  
+        remove_regex = re.compile(self._remove_regex_string)         
         try:
             for log_entry in self._all_log_entries:
                 if self._is_log_type_active \
                     and self._current_log_type != log_entry.log_type and self._current_log_type != "":
                     continue
-                if not self._is_search_active or self._regex_string == "":
-                    self._log_entries.append(log_entry)
-                else:
-                    match = regex.search(log_entry.message)
-                    if (match):
+                if not self._is_remove_active or self._remove_regex_string == "":
+                    if not self._is_search_active or self._regex_string == "":
                         self._log_entries.append(log_entry)
+                else:
+                    match = remove_regex.search(log_entry.message)
+                    if not match:
+                        match = regex.search(log_entry.message)
+                        if match:
+                            self._log_entries.append(log_entry)
             if update_log_types:
                 self.log_types_changed.emit()
         except Exception as e:
