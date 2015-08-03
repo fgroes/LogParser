@@ -6,6 +6,7 @@ from PyQt4 import QtCore, QtGui
 import re
 import datetime
 import logging
+import cProfile
 
 
 re_line = re.compile(r"^(?P<log_type>[\w ]{8}):\ (?P<date>\d{4}-\d{2}-\d{2}\ \d{2}:\d{2}:\d{2}(.\d*)?): (?P<message>.*)$")
@@ -41,6 +42,7 @@ def tail(f, window=20):
         block -= 1
     return ''.join(data).splitlines()[-window:]
 
+
 def stringToDateTime(date_time_string):
     match = re_date.search(date_time_string)
     if match:
@@ -51,7 +53,7 @@ def stringToDateTime(date_time_string):
         hour = int(gd["hour"])
         minute = int(gd["minute"])
         second = int(float(gd["second"]))
-        microsecond = int(1000 * (float(gd["second"]) - second))
+        microsecond = int(1E6 * (float(gd["second"]) - second))
         date_time = datetime.datetime(year, month, day, hour, minute, second, microsecond)
         return date_time
     else:
@@ -75,6 +77,7 @@ class LogEntry(object):
             date = gd["date"]
             message = gd["message"]
             date_time = stringToDateTime(date)
+            #date_time = datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f") # is slower
             log_entry = LogEntry(line_num, log_type, date_time, message)
             return log_entry
         else:
@@ -96,15 +99,18 @@ class LoadDataThread(QtCore.QThread):
     data_loaded = QtCore.pyqtSignal(LogEntries)
     file_progress_changed = QtCore.pyqtSignal(int)
     
-    def __init__(self, file_names, start_date_time, end_date_time):
+    def __init__(self, file_names, start_date_time, end_date_time, profile=False):
         self._log = logging.getLogger(name="main")
         super(LoadDataThread, self).__init__()
         self._file_names = file_names
         self._start_date_time = start_date_time
         self._end_date_time = end_date_time
         self._log_entries = LogEntries()
+        self._is_profile_enabled = profile
+        if self._is_profile_enabled: self._profiler = cProfile.Profile()
         
     def run(self):
+        if self._is_profile_enabled: self._profiler.enable()
         self.file_progress_changed.emit(0)
         self._file_names_in_time_range = []
         for file_name in self._file_names:
@@ -138,6 +144,8 @@ class LoadDataThread(QtCore.QThread):
                             self._log_entries.log_types.append(log_entry.log_type)
             progress = int((j + 1) * 100 / len(self._file_names_in_time_range))
             self.file_progress_changed.emit(progress)
+        if self._is_profile_enabled: self._profiler.disable()
+        if self._is_profile_enabled: self._profiler.print_stats()
         self.data_loaded.emit(self._log_entries)
             
             
@@ -267,7 +275,7 @@ class LogTableModel(QtCore.QAbstractTableModel):
                 elif col == 1:
                     result = self._log_entries[row].log_type
                 elif col == 2:
-                    result = self._log_entries[row].date_time.__str__()
+                    result = self._log_entries[row].date_time.__str__()[:-3]
                 elif col == 3:
                     result = self._log_entries[row].message
             elif role == QtCore.Qt.BackgroundColorRole:
