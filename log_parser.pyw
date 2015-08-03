@@ -14,6 +14,30 @@ import itertools
 import logging
 
 
+class ConfigFile(object):
+
+    default_file_name = "config.txt"
+
+    def __init__(self, default_log_dir=None):
+        self.default_log_dir = default_log_dir
+
+    def load(self, file_name=default_file_name):
+        self.default_log_dir = None
+        try:
+            with open(file_name, "r") as fid:
+                for line in fid:
+                    line_split = line.split("=")
+                    if line_split[0].strip() == "default log directory":
+                        self.default_log_dir = line_split[1].strip()
+        except:
+            pass
+
+    def save(self, file_name=default_file_name):
+        with open(file_name, "w") as fid:
+            fid.write("default log directory = {0}\n".format(self.default_log_dir))
+
+
+
 class LogParser(QtGui.QMainWindow):
     
     _dateTimeDisplayFormat = "yyyy-MM-dd hh:mm:ss"
@@ -22,6 +46,8 @@ class LogParser(QtGui.QMainWindow):
         self._log = logging.getLogger(name="main")
         super(LogParser, self).__init__(parent)
         self._init_ui()
+        self._config_file = ConfigFile()
+        self._config_file.load()
         
     def _init_ui(self):
         uic.loadUi("log_parser.ui", self)
@@ -57,11 +83,18 @@ class LogParser(QtGui.QMainWindow):
         self.endDateTimeEdit.dateTimeChanged.connect(self._end_date_time_changed)
         
     def _file_button_clicked(self):
-        start_dir = "C:/"
-        self.file_name = QtGui.QFileDialog.getOpenFileName(self, "Log file name", start_dir)
-        self.fileLabel.setText(self.file_name)
-        self._log_table_model.file_names = self._list_all_files(self.file_name)
-        self._format_log_table()   
+        try:
+            if not self._config_file.default_log_dir: raise Exception("no valid default directory in config file")
+            start_dir = self._config_file.default_log_dir
+            self.file_name = QtGui.QFileDialog.getOpenFileName(self, "Log file name", start_dir)
+        except:
+            self.file_name = QtGui.QFileDialog.getOpenFileName(self, "Log file name", "C:\\")
+        finally:
+            self.fileLabel.setText(self.file_name)
+            self._log_table_model.file_names = self._list_all_files(self.file_name)
+            self._format_log_table()
+            dir_name = os.path.dirname(str(self.file_name))
+            self._config_file.default_log_dir = dir_name
     
     def _list_all_files(self, full_file_name):
         directory, file_name = os.path.split(str(full_file_name))
@@ -137,6 +170,9 @@ class LogParser(QtGui.QMainWindow):
                 fig.show()
             except Exception as e:
                 logging.error("Error: {0}".format(e))
+
+    def closeEvent(self, *args, **kwargs):
+        self._config_file.save()
                 
         
 if __name__ == "__main__":
