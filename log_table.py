@@ -13,6 +13,11 @@ re_line = re.compile(r"^(?P<log_type>[\w ]{8}):\ (?P<date>\d{4}-\d{2}-\d{2}\ \d{
 re_date = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})\ (?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>[\d.]+)$")
 
 
+class LogTableStates(object):
+    Idle = 0
+    LoadingFiles = 1
+
+
 def tail(f, window=20):
     """
     Returns the last `window` lines of file `f` as a list.
@@ -176,7 +181,8 @@ class LogTableModel(QtCore.QAbstractTableModel):
         self.update()
         self._start_date_time = None
         self._end_date_time = None
-        self._load_data_threads = []        
+        self._load_data_threads = []
+        self._state = LogTableStates.Idle
         
     def _get_start_date_time(self, date_time):
         return self._start_date_time
@@ -286,16 +292,19 @@ class LogTableModel(QtCore.QAbstractTableModel):
         return result
         
     def _load_data(self):
-        load_data_thread = LoadDataThread(self._file_names, self._start_date_time, self._end_date_time)
-        load_data_thread.data_loaded.connect(self._on_data_loaded)
-        load_data_thread.file_progress_changed.connect(self._on_file_progress_changed)
-        self._load_data_threads.append(load_data_thread)
-        load_data_thread.start()       
+        if self._state == LogTableStates.Idle:
+            self._state = LogTableStates.LoadingFiles
+            load_data_thread = LoadDataThread(self._file_names, self._start_date_time, self._end_date_time)
+            load_data_thread.data_loaded.connect(self._on_data_loaded)
+            load_data_thread.file_progress_changed.connect(self._on_file_progress_changed)
+            self._load_data_threads.append(load_data_thread)
+            load_data_thread.start()
    
     def _on_data_loaded(self, log_entries):
         self._all_log_entries = log_entries.all_log_entries
         self._log_types = log_entries.log_types
         self.update()
+        self._state = LogTableStates.Idle
         
     def _on_file_progress_changed(self, value):
         self.file_progress_changed.emit(value)

@@ -1,0 +1,1 @@
+default log directory = D:/Projekte/EOS/Online/EOSTATEMeltpoolTest/TestData/Log_20150826

@@ -37,7 +37,6 @@ class ConfigFile(object):
             fid.write("default log directory = {0}\n".format(self.default_log_dir))
 
 
-
 class LogParser(QtGui.QMainWindow):
     
     _dateTimeDisplayFormat = "yyyy-MM-dd hh:mm:ss"
